@@ -1,0 +1,8 @@
+@charset "ISO-8859-1";
+
+.contenedor-prueba{
+	
+	width: 100px;
+	height: 100px;
+	background-color: darkgoldenrod;	
+}
