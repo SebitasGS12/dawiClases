@@ -2,6 +2,7 @@ package com.ciberfarma.controller;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.ciberfarma.model.Producto;
 import com.ciberfarma.repository.ICategoriaRepository;
@@ -50,6 +52,14 @@ public class ProductoController {
 	private ResourceLoader resourceLoader; // core.io
 	
 	//Get
+	
+	
+	@GetMapping("/")
+	public String home() {
+		return "redirect:/cargar";
+	}
+	
+	
 	
 	@GetMapping("/cargar")
 	public String abrirCrudProductos(Model model) {
@@ -86,10 +96,16 @@ public class ProductoController {
 	
 	
 	@PostMapping("/grabar")
-	public String enviarProducto(Model model,@ModelAttribute("producto") Producto producto) {
+	public String enviarProducto(Model model,@ModelAttribute("producto") Producto producto ,@RequestParam("btnOpcion") String opcion,RedirectAttributes attributes) {
 
 		
-		String mensaje ="";
+		String mensaje = "";
+		if (opcion.equals("fil")) {
+			
+			attributes.addAttribute("producto", producto);
+			return "redirect:/reportes/filtro";
+		}
+		
 		try {
 			
 			repoProducto.save(producto);
@@ -107,6 +123,45 @@ public class ProductoController {
 		
 		return "redirect:/cargar";
 		
+	}
+	
+	
+	
+	@GetMapping("/reportes/filtro")
+	public void filtro(HttpServletResponse response,@ModelAttribute("producto") Producto producto ) {
+		
+		
+		//response.setHeader("Content-Disposition", "attachment; filename=\"reporte.pdf\";");
+		response.setHeader("Content-Disposition", "inline;");
+		response.setContentType("application/pdf");
+		try {
+			
+			
+			//Definir parametros
+			
+			HashMap<String, Object> parameters = new HashMap<>();
+			parameters.put("usuario", "gareca");
+			
+			
+			parameters.put("proveedor",producto.getIdproveedor()
+					);
+			parameters.put("codigo",producto.getId_prod());
+			
+			
+			System.out.println(producto.getIdproveedor());
+			
+			
+			//Devuelve el recurso
+		String ru = resourceLoader.getResource("classpath:demo03.jasper").getURI().getPath();
+		//comvina el jasper con la data
+		JasperPrint jasperPrint = JasperFillManager.fillReport(ru, parameters, dataSource.getConnection());
+ 
+		OutputStream outStream = response.getOutputStream();
+		JasperExportManager.exportReportToPdfStream(jasperPrint, outStream);
+		} catch (Exception e) {
+		e.printStackTrace();
+		}
+				
 	}
 	
 	
